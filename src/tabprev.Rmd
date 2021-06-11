@@ -1,0 +1,38 @@
+```{r tab1prev, cache=cacheon}
+
+tabprevtot <- rsdata %>%
+  group_by(shf_ef_cat) %>%
+  count(shf_anemia) %>%
+  mutate(
+    p = fn(n / sum(n) * 100, 1),
+    np = paste0(n, " (", p, "%)")
+  ) %>%
+  filter(shf_anemia == "Yes") %>%
+  select(shf_ef_cat, np) %>%
+  pivot_wider(names_from = shf_ef_cat, values_from = np) %>%
+  mutate(shf_sex = "Total") %>%
+  select(shf_sex, HFrEF:`NA`)
+
+tabprevsex <- rsdata %>%
+  group_by(shf_ef_cat, shf_sex) %>%
+  count(shf_anemia) %>%
+  mutate(
+    p = fn(n / sum(n) * 100, 1),
+    np = paste0(n, " (", p, "%)")
+  ) %>%
+  filter(shf_anemia == "Yes") %>%
+  select(shf_ef_cat, shf_sex, np) %>%
+  pivot_wider(names_from = shf_ef_cat, values_from = np)
+
+taball <- bind_rows(tabprevtot, tabprevsex)
+
+write.xlsx(taball, paste0("./output/tabs/tabprev_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+## fix in order to use escape = TRUE
+colnames(taball) <- c("Sex", levels(rsdata$shf_ef_cat), "Missing EF")
+
+default_kable(taball,
+  scale_down = FALSE,
+  caption = "Prevalence anemia by EF and gernder"
+)
+```

@@ -1,0 +1,182 @@
+---
+title: 'Statistical report: Anemia in patients with heartfailure managed in primary care'
+subtitle: 'DRAFT'
+author: 'Statistician: Lina Benson'
+  
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    fig_caption: yes
+    fig_height: 7
+    fig_width: 7
+    number_sections: yes
+link-citations: yes
+bibliography: references.bib
+nocite: '@*'
+header-includes:
+   - \usepackage{draftwatermark}
+---
+
+\newpage 
+\tableofcontents 
+\listoftables
+\listoffigures
+\newpage
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, include = TRUE, comment = "",
+  warning = FALSE, message = FALSE, fig.pos = "H",
+  fig.path = "../output/figs/"
+)
+options(knitr.kable.NA = "")
+```
+
+```{r adjust_directory_if_needed, include=FALSE}
+# Uncomment lines below if rmd file is placed in a subdirectory
+knitr::opts_knit$set(root.dir = normalizePath("../"))
+```
+
+```{r load_project}
+# 1. Set options in config/global.dcf
+# 2. Load packages listed in config/global.dcf
+# 3. Import functions and code in lib directory
+
+ProjectTemplate::reload.project()
+
+cacheon <- FALSE
+```             
+
+# Data handling
+
+## Data source
+
+SHFDB3, https://kiheartfailure.github.io/shfdb3/, v 3.2.4. 
+
+## Inclusion/exclusion criteria
+
+```{r flow}
+default_kable(flow, caption = "Flowchart", scale_down = FALSE)
+```
+
+First patient in: `r min(rsdata$shf_indexdtm)` and last patient in: `r max(rsdata$shf_indexdtm)`.  
+
+The median age (IQR) is `r rsdata %>% summarise(med = fn(median(shf_age), dig = 1),
+                                             q1 = fn(quantile(shf_age, probs = 0.25), dig = 1),
+                                             q3 = fn(quantile(shf_age, probs = 0.75), dig = 1)) %>%
+                                   mutate(out = paste0(med, " (", q1, "-", q3, ")")) %>%
+                                   pull(out)` and 
+`r rsdata %>% count(shf_sex) %>%
+  mutate(perc = fn(n / sum(n) * 100, 1)) %>%
+  filter(shf_sex == "Female") %>%
+  pull(perc)`% females.    
+
+KOMMENTAR / FRÅGA: 
+
+1. Som studiepopulation är definerat: Indexregistrerade (senaste  reg .). 
+Observera dock att indexregistreiring är FÖRSTA post och om man selektrerar sista 
+kommer man därmed per defintion enbart få de med 1 registrering / patient. Jag har därför frångått kriteriet indexregistrering. 
+
+2. Ska allt vara uppdelat på EF? I så fall är det vettigt att exkludera poster som saknar
+EF (kan ha ytterligare en grupp "missing EF" men tror kan ta fokus från huvudfrågan). 
+DOCK, om ska ha huvudanalys oavavsett EF och sedan subgrupp EF kanske bäst att inte exkludera de 
+som saknar EF då de som saknar EF är lite annorlunda.   
+
+## Created variables 
+
+KOMMENTAR / FRÅGA: Nu har jag definerat död pga malignitet som ICD-10 C i ULORSAK i dödsorsaksregistret. 
+Om du vill ha annan defintion kan du specificera? 
+Om du (deskriptivt) vill titta på några specifika cancersorter (ex prosta, bröst, colon) speca ICD koder. 
+
+# Statistical analysis 
+
+## General
+
+All analyses were performed using `r sessionInfo()$R.version$version.string` [@r]. 
+The level of significance is set to 5%, two-sided. No adjustment for multiple 
+comparisons were made and therefore the results should be viewed with some care.
+
+## Missing data
+
+Missing data was imputed with multiple imputation (n = 10) using mice [@mice]. 
+Variables included in the model are indicated in 
+Table \ref{tab:tab1}. All-casuse mortality was included as the Nelson-Aalen estimator.
+
+## Baseline characteristics
+
+```{r, child = "../src/tabprev.Rmd"}
+
+```
+
+KOMMENTAR / FRÅGA: 
+- Ska tab 1 vara uppdelat på något utöver anemi? 
+Ex EF? Någa andra variabler som ska läggas till/tas bort ur tabellen?
+
+```{r, child = "../src/tab1.Rmd"}
+
+```
+
+## Association to anemia
+
+KOMMENTAR / FRÅGA: 
+
+- Tänker du alltså här association mellan baslinje data (de som finns i tab 1) och anemia? 
+- Ska detta vara oavsett kön och ef eller uppdelat? 
+- Vilka variabler ska vara med i modellen?
+- Hur ska presenteras? I tabell eller ex Forestplot eller båda? Om det senare ska det vara selekterade variabler i Forestplot (vilka?)? 
+
+## Outcome analysis
+
+The following outcomes are considered: 
+
+- All-cause mortality
+- First hospitalization of any kind
+- Malignancy
+
+KOMMENTAR / FRÅGA: 
+
+- Stämmer dessa utfall? Ytterligare fler?
+- Ska titta på all tillgänglig uppföljningstid (alltså upp tom 20 års uppföljning). Eller ska titta på tom ex 1, 3 eller 5 år?
+- Ska detta enbart vara uppdelat på ef?
+- Jag har svårt att förstå hela del II. Är detta något fundamentalt annorlunda än del I? Eller är det ytterligare ett utfall som kan gå in under del I? Kan du förklara närmare?
+
+Data were censored at 2019-12-31 or death/emigration. 
+
+The outcomes are presented with the 1 - Kaplan-Meier curves. Cox proportional hazards regressions were 
+used to model the time to first event. The analyses were also performed using a sub-distributional hazards model [@fg] 
+were death was treated as a competing event for the outcomes were applicable. 
+
+The median (min-max) follow-up is 
+`r rsdata %>% summarise(med = fn(median(sos_outtime_death / 365.25), dig = 1),
+                                             min = fn(min(sos_outtime_death / 365.25), dig = 1),
+                                             max = fn(max(sos_outtime_death / 365.25), dig = 1)) %>%
+                                   mutate(out = paste0(med, " (", min, "-", max, ")")) %>%
+                                   pull(out)` years for a total of 
+                                   `r rsdata %>% summarise(sumpy = fn(sum(sos_outtime_death) / 365.25, dig = 0)) %>%
+                                   pull(sumpy)` patient-years of follow-up.
+
+
+```{r, child = "../src/km.Rmd"}
+
+```
+
+\clearpage
+\newpage
+
+# Reproducibility
+
+## R session information {#sessioninfo}
+
+```{r sessinfo}
+sessionInfo()
+```
+
+## R code
+
+The R code for all data handling and statistical analyses are found: 
+https://github.com/KIHeartFailure/anemiapc. On publication
+the repository will be made public so as to 
+link to it from the resulting article for increased transparency and code sharing.
+No data or output is stored in the repository. 
+
+# References
