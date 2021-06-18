@@ -4,6 +4,12 @@
 
 noimpvars <- names(rsdata)[!names(rsdata) %in% modvars]
 
+# Nelson-Aalen estimator
+na <- basehaz(coxph(Surv(sos_outtime_death6y, sos_out_death6y == "Yes") ~ 1,
+  data = rsdata, method = "breslow"
+))
+rsdata <- left_join(rsdata, na, by = c("sos_outtime_death6y" = "time"))
+
 ini <- mice(rsdata, maxit = 0, print = F)
 
 pred <- ini$pred

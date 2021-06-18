@@ -33,6 +33,6 @@ colnames(taball) <- c("Sex", levels(rsdata$shf_ef_cat), "Missing EF")
 
 default_kable(taball,
   scale_down = FALSE,
-  caption = "Prevalence anemia by EF and gernder"
+  caption = "Prevalence anemia by EF and gender"
 )
 ```

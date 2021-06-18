@@ -4,9 +4,10 @@
 
 rsdata <- rsdata %>%
   mutate(
-    shf_location = relevel(shf_location, ref = "Out-patient"),
-    sos_location = relevel(sos_location, ref = "Out-patient"),
-
+    shf_indexyear_cat = case_when(
+      shf_indexyear <= 2010 ~ "2000-2010",
+      shf_indexyear <= 2018 ~ "2011-2018"
+    ),
     shf_nyha_cat = case_when(
       shf_nyha == "I" ~ "I",
       shf_nyha == "II" ~ "II",
@@ -19,12 +20,10 @@ rsdata <- rsdata %>%
       shf_sex == "Female" & shf_hb < 120 | shf_sex == "Male" & shf_hb < 130 ~ "Yes",
       TRUE ~ "No"
     ),
-
     shf_age_cat = case_when(
       shf_age < 75 ~ "<75",
       shf_age >= 75 ~ ">=75"
     ),
-
     shf_ef_cat = factor(case_when(
       shf_ef == ">=50" ~ 3,
       shf_ef == "40-49" ~ 2,
@@ -33,20 +32,17 @@ rsdata <- rsdata %>%
     labels = c("HFrEF", "HFmrEF", "HFpEF"),
     levels = 1:3
     ),
-
     shf_smoking_cat = factor(case_when(
-      shf_smoking %in% c("Never") ~ 1,
-      shf_smoking %in% c("Former", "Current") ~ 2
+      shf_smoking %in% c("Former", "Never") ~ 0,
+      shf_smoking %in% c("Current") ~ 1
     ),
-    labels = c("Never", "Former/Current"),
-    levels = 1:2
+    labels = c("No", "Yes"),
+    levels = 0:1
     ),
-
     shf_map_cat = case_when(
       shf_map <= 90 ~ "<=90",
       shf_map > 90 ~ ">90"
     ),
-
     shf_potassium_cat = factor(
       case_when(
         is.na(shf_potassium) ~ NA_real_,
@@ -57,12 +53,10 @@ rsdata <- rsdata %>%
       labels = c("normakalemia", "hypokalemia", "hyperkalemia"),
       levels = 1:3
     ),
-
     shf_heartrate_cat = case_when(
       shf_heartrate <= 70 ~ "<=70",
       shf_heartrate > 70 ~ ">70"
     ),
-
     shf_device_cat = factor(case_when(
       is.na(shf_device) ~ NA_real_,
       shf_device %in% c("CRT", "CRT & ICD", "ICD") ~ 2,
@@ -71,13 +65,11 @@ rsdata <- rsdata %>%
     labels = c("No", "CRT/ICD"),
     levels = 1:2
     ),
-
     shf_bmi_cat = case_when(
       is.na(shf_bmi) ~ NA_character_,
       shf_bmi < 30 ~ "<30",
       shf_bmi >= 30 ~ ">=30"
     ),
-
     shf_gfrckdepi_cat = factor(case_when(
       is.na(shf_gfrckdepi) ~ NA_real_,
       shf_gfrckdepi >= 60 ~ 1,
@@ -86,14 +78,12 @@ rsdata <- rsdata %>%
     labels = c(">=60", "<60"),
     levels = 1:2
     ),
-
     shf_sos_com_af = case_when(
       sos_com_af == "Yes" |
         shf_af == "Yes" |
         shf_ekg == "Atrial fibrillation" ~ "Yes",
       TRUE ~ "No"
     ),
-
     shf_sos_com_ihd = case_when(
       sos_com_ihd == "Yes" |
         shf_revasc == "Yes" |
@@ -101,56 +91,32 @@ rsdata <- rsdata %>%
         sos_com_cabg == "Yes" ~ "Yes",
       TRUE ~ "No"
     ),
-
     shf_sos_com_hypertension = case_when(
       shf_hypertension == "Yes" |
         sos_com_hypertension == "Yes" ~ "Yes",
       TRUE ~ "No"
     ),
-
     shf_sos_com_diabetes = case_when(
       shf_diabetes == "Yes" |
         sos_com_diabetes == "Yes" ~ "Yes",
       TRUE ~ "No"
     ),
-
     shf_sos_com_valvular = case_when(
       shf_valvedisease == "Yes" |
         sos_com_valvular == "Yes" ~ "Yes",
       TRUE ~ "No"
     ),
+    shf_followuplocation_cat = if_else(shf_followuplocation %in% c("Primary care", "Other"), "Primary care/Other",
+      as.character(shf_followuplocation)
+    ),
 
     # Outcomes
 
-    # limit to 3 yrs
-    sos_out_hospany3y = if_else(sos_outtime_hospany >= 365 * 3, "No", as.character(sos_out_hospany)),
-    sos_outtime_hospany3y = if_else(sos_outtime_hospany >= 365 * 3, 365, sos_outtime_hospany),
-
-    sos_out_hospcv3y = if_else(sos_outtime_hospcv >= 365 * 3, "No", as.character(sos_out_hospcv)),
-    sos_outtime_hospcv3y = if_else(sos_outtime_hospcv >= 365 * 3, 365, sos_outtime_hospcv),
-
-    sos_out_hospnoncv3y = if_else(sos_outtime_hospnoncv >= 365 * 3, "No", as.character(sos_out_hospnoncv)),
-    sos_outtime_hospnoncv3y = if_else(sos_outtime_hospnoncv >= 365 * 3, 365, sos_outtime_hospnoncv),
-
-    sos_out_hosphf3y = if_else(sos_outtime_hosphf >= 365 * 3, "No", as.character(sos_out_hosphf)),
-    sos_outtime_hosphf3y = if_else(sos_outtime_hosphf >= 365 * 3, 365, sos_outtime_hosphf),
-
-    sos_out_deathcv3y = if_else(sos_outtime_death >= 365 * 3, "No", as.character(sos_out_deathcv)),
-    sos_out_deathnoncv3y = if_else(sos_outtime_death >= 365 * 3, "No", as.character(sos_out_deathnoncv)),
-    sos_out_death3y = if_else(sos_outtime_death >= 365 * 3, "No", as.character(sos_out_death)),
-    sos_outtime_death3y = if_else(sos_outtime_death >= 365 * 3, 365, sos_outtime_death),
-
-    # combined
-    sos_out_deathhosphf3y = case_when(
-      sos_out_death3y == "Yes" |
-        sos_out_hosphf3y == "Yes" ~ "Yes",
-      TRUE ~ "No"
-    ),
-    sos_out_deathcvhosphf3y = case_when(
-      sos_out_deathcv3y == "Yes" |
-        sos_out_hosphf3y == "Yes" ~ "Yes",
-      TRUE ~ "No"
-    ),
+    # limit to 6 yrs
+    sos_out_hospany6y = if_else(sos_outtime_hospany >= 365.25 * 6, "No", as.character(sos_out_hospany)),
+    sos_outtime_hospany6y = if_else(sos_outtime_hospany >= 365.25 * 6, 365 * 6.25, sos_outtime_hospany),
+    sos_out_death6y = if_else(sos_outtime_death >= 365.25 * 6, "No", as.character(sos_out_death)),
+    sos_outtime_death6y = if_else(sos_outtime_death >= 365.25 * 6, 365 * 6.25, sos_outtime_death)
   )
 
 

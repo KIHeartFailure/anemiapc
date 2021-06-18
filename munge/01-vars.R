@@ -4,22 +4,20 @@
 
 tabvars <- c(
   # demo
-  "sos_location", 
   "shf_sex",
   "shf_age",
-  "shf_age_cat", 
-  "shf_indexyear",
+  "shf_age_cat",
+  "shf_indexyear_cat",
 
   # clinical factors and lab measurments
   "shf_ef_cat",
   "shf_nyha_cat",
-
   "shf_map",
-  "shf_map_cat", 
+  "shf_map_cat",
   "shf_bpsys",
   "shf_bpdia",
   "shf_heartrate",
-  "shf_heartrate_cat", 
+  "shf_heartrate_cat",
   "shf_bmi",
   "shf_bmi_cat",
   "shf_hb",
@@ -59,7 +57,7 @@ tabvars <- c(
 
   # organizational
   "shf_followuphfunit",
-  "shf_followuplocation",
+  "shf_followuplocation_cat",
 
   # socec
   "scb_famtype",
@@ -69,7 +67,7 @@ tabvars <- c(
 )
 
 tabvars_not_in_mod <- c(
-  "shf_age", 
+  "shf_age",
   "shf_map",
   "shf_bpsys",
   "shf_bpdia",
@@ -77,8 +75,10 @@ tabvars_not_in_mod <- c(
   "shf_bmi",
   "shf_hb",
   "shf_potassium",
+  "shf_potassium_cat",
   "shf_gfrckdepi",
-  "shf_ntprobnp"
+  "shf_ntprobnp",
+  "sos_com_charlsonci"
 )
 
 modvars <- tabvars[!(tabvars %in% tabvars_not_in_mod)]
