@@ -23,6 +23,13 @@
       "Repository": "CRAN",
       "Hash": "292b54f8f4b94669b08f94e5acce6be2"
     },
+    "Rcpp": {
+      "Package": "Rcpp",
+      "Version": "1.0.4.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e652f23d8b1807cc975c51410d05b72f"
+    },
     "assertthat": {
       "Package": "assertthat",
       "Version": "0.2.1",
@@ -30,12 +37,26 @@
       "Repository": "CRAN",
       "Hash": "50c838a310445e954bc13f26f26a6ecf"
     },
+    "backports": {
+      "Package": "backports",
+      "Version": "1.2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "644043219fc24e190c2f620c1a380a69"
+    },
     "base64enc": {
       "Package": "base64enc",
       "Version": "0.1-3",
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "543776ae6848fde2f48ff3816d0628bc"
+    },
+    "broom": {
+      "Package": "broom",
+      "Version": "0.7.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "06015476250468fc013c30022118ce3a"
     },
     "cli": {
       "Package": "cli",
@@ -135,6 +156,13 @@
       "Repository": "CRAN",
       "Hash": "0bc1b5da1b0eb07cd4b727e95e9ff0b8"
     },
+    "lattice": {
+      "Package": "lattice",
+      "Version": "0.20-41",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "fbd9285028b0263d76d18c95ae51a53d"
+    },
     "lifecycle": {
       "Package": "lifecycle",
       "Version": "1.0.0",
@@ -155,6 +183,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "61e4a10781dd00d7d81dd06ca9b94e95"
+    },
+    "mice": {
+      "Package": "mice",
+      "Version": "3.13.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ad5d45cfde1d122001e0dca07f80182a"
     },
     "mime": {
       "Package": "mime",

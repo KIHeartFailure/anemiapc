@@ -11,6 +11,7 @@ tabvars <- c(
 
   # clinical factors and lab measurments
   "shf_ef_cat",
+  "shf_nyha",
   "shf_nyha_cat",
   "shf_map",
   "shf_map_cat",
@@ -68,6 +69,7 @@ tabvars <- c(
 
 tabvars_not_in_mod <- c(
   "shf_age",
+  "shf_nyha",
   "shf_map",
   "shf_bpsys",
   "shf_bpdia",

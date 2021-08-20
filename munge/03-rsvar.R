@@ -2,6 +2,15 @@
 
 # Additional variables from mainly SHF ------------------------------------
 
+
+crfunc <- function(outvar, compvar) {
+  outvarcr <- case_when(
+    !!outvar == "Yes" ~ 1,
+    !!compvar == "Yes" ~ 2,
+    TRUE ~ 0
+  )
+}
+
 rsdata <- rsdata %>%
   mutate(
     shf_indexyear_cat = case_when(
@@ -9,8 +18,7 @@ rsdata <- rsdata %>%
       shf_indexyear <= 2018 ~ "2011-2018"
     ),
     shf_nyha_cat = case_when(
-      shf_nyha == "I" ~ "I",
-      shf_nyha == "II" ~ "II",
+      shf_nyha %in% c("I", "II") ~ "I - II",
       shf_nyha %in% c("III", "IV") ~ "III-IV"
     ),
 
@@ -114,9 +122,12 @@ rsdata <- rsdata %>%
 
     # limit to 6 yrs
     sos_out_hospany6y = if_else(sos_outtime_hospany >= 365.25 * 6, "No", as.character(sos_out_hospany)),
-    sos_outtime_hospany6y = if_else(sos_outtime_hospany >= 365.25 * 6, 365 * 6.25, sos_outtime_hospany),
+    sos_outtime_hospany6y = if_else(sos_outtime_hospany >= 365.25 * 6, 365 * 6, sos_outtime_hospany),
     sos_out_death6y = if_else(sos_outtime_death >= 365.25 * 6, "No", as.character(sos_out_death)),
-    sos_outtime_death6y = if_else(sos_outtime_death >= 365.25 * 6, 365 * 6.25, sos_outtime_death)
+    sos_outtime_death6y = if_else(sos_outtime_death >= 365.25 * 6, 365 * 6, sos_outtime_death),
+
+    # comp risk
+    sos_out_hospany6y_cr = crfunc(sos_out_hospany6y, sos_out_death6y)
   )
 
 

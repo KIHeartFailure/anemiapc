@@ -13,6 +13,8 @@ output:
 link-citations: yes
 bibliography: references.bib
 nocite: '@*'
+urlcolor: blue
+linkcolor: black
 header-includes:
    - \usepackage{draftwatermark}
 ---
@@ -99,8 +101,8 @@ Table \ref{tab:tab1}. All-casuse mortality was included as the Nelson-Aalen esti
 
 ## Associations with anemia
 
-Associations between anemia and baseline characteristics were evaluated using logistic 
-regression using variables indicated in Table \ref{tab:tab1}. 
+Associations between anemia and baseline characteristics were evaluated using a multivariable logistic 
+regression with variables indicated in Table \ref{tab:tab1}. 
 The variables were selected based on clinical relevance. 
 
 ```{r, child = "../src/predictors.Rmd"}
@@ -109,26 +111,38 @@ The variables were selected based on clinical relevance.
 
 \clearpage
 
-## Outcomes
+## Association between anemia and outcomes
 
 The following outcomes are considered: 
 
 - All-cause mortality
-- First hospitalization of any kind
+- First hospitalization
 
 Data were censored after 6 years, at 2019-12-31 or death/emigration. 
 
-The outcomes are presented with the 1 - Kaplan-Meier curves. Cox proportional hazards regressions were 
-used to model the time to first event, partly crude and partly adjusted for variables indicated in 
-Table \ref{tab:tab1}. The variables were selected based on clinical relevance. 
+All-cause mortality was presented with a Kaplan-Meier curve and first 
+hospitalization with a cumulative incidence curve. 
+Cox proportional hazards regressions were 
+used to model the time to event, partly crude and partly adjusted for variables indicated in 
+Table \ref{tab:tab1}. The variables were selected based on clinical relevance.
+
+As a consistency analysis all-cause hospitalization was modelled using a sub-distributional hazards model [@fg] 
+were death was treated as a competing event. 
+
+The association between anemia and the outcomes in selected subgroups were 
+investigated using Cox proportional hazards regressions were, together with 
+the variables indicated in Table \ref{tab:tab1}, the interaction between anemia 
+and the respective variable was included, thereby giving the interpretation of a 
+subgroup analysis but with the additional advantage of also being able to test 
+for differences in effect between subgroups. 
 
 The median (min-max) follow-up is 
-`r rsdata %>% summarise(med = fn(median(sos_outtime_death / 365.25), dig = 1),
-                                             min = fn(min(sos_outtime_death / 365.25), dig = 1),
-                                             max = fn(max(sos_outtime_death / 365.25), dig = 1)) %>%
+`r rsdata %>% summarise(med = fn(median(sos_outtime_death6y / 365.25), dig = 1),
+                                             min = fn(min(sos_outtime_death6y / 365.25), dig = 1),
+                                             max = fn(max(sos_outtime_death6y / 365.25), dig = 1)) %>%
                                    mutate(out = paste0(med, " (", min, "-", max, ")")) %>%
                                    pull(out)` years for a total of 
-                                   `r rsdata %>% summarise(sumpy = fn(sum(sos_outtime_death) / 365.25, dig = 0)) %>%
+                                   `r rsdata %>% summarise(sumpy = fn(sum(sos_outtime_death6y) / 365.25, dig = 0)) %>%
                                    pull(sumpy)` patient-years of follow-up.
 
 
@@ -139,6 +153,17 @@ The median (min-max) follow-up is
 ```{r, child = "../src/outtab.Rmd"}
 
 ```
+
+```{r, child = "../src/outforestsub.Rmd"}
+
+```
+
+### Assumptions
+
+The proportional hazards assumption was investigated using the scaled Schoenfeld 
+residuals (cox.zph in [@survival-package]) for the primary outcome. 
+Possible outliers were visually inspected by plotting the dfbetas. 
+=> XXXX. 
 
 \clearpage
 \newpage
