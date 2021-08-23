@@ -2,14 +2,10 @@
 
 # Additional variables from mainly SHF ------------------------------------
 
+# limit outcomes to 6 yrs
 
-crfunc <- function(outvar, compvar) {
-  outvarcr <- case_when(
-    !!outvar == "Yes" ~ 1,
-    !!compvar == "Yes" ~ 2,
-    TRUE ~ 0
-  )
-}
+rsdata <- cut_surv(rsdata, sos_out_hospany, sos_outtime_hospany, floor(365.25 * 6), rename = "6y")
+rsdata <- cut_surv(rsdata, sos_out_death, sos_outtime_death, floor(365.25 * 6), rename = "6y")
 
 rsdata <- rsdata %>%
   mutate(
@@ -119,15 +115,8 @@ rsdata <- rsdata %>%
     ),
 
     # Outcomes
-
-    # limit to 6 yrs
-    sos_out_hospany6y = if_else(sos_outtime_hospany >= 365.25 * 6, "No", as.character(sos_out_hospany)),
-    sos_outtime_hospany6y = if_else(sos_outtime_hospany >= 365.25 * 6, 365 * 6, sos_outtime_hospany),
-    sos_out_death6y = if_else(sos_outtime_death >= 365.25 * 6, "No", as.character(sos_out_death)),
-    sos_outtime_death6y = if_else(sos_outtime_death >= 365.25 * 6, 365 * 6, sos_outtime_death),
-
     # comp risk
-    sos_out_hospany6y_cr = crfunc(sos_out_hospany6y, sos_out_death6y)
+    sos_out_hospany6y_cr = create_crevent(sos_out_hospany6y, sos_out_death6y)
   )
 
 
