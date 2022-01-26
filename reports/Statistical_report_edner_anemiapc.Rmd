@@ -1,6 +1,5 @@
 ---
-title: 'Statistical report: Anemia in patients with heartfailure managed in primary care'
-subtitle: 'DRAFT'
+title: 'Statistical report: Anemia in patients with heart failure managed in primary care'
 author: 'Statistician: Lina Benson'
   
 date: "`r Sys.Date()`"
@@ -15,8 +14,6 @@ bibliography: references.bib
 nocite: '@*'
 urlcolor: blue
 linkcolor: black
-header-includes:
-   - \usepackage{draftwatermark}
 ---
 
 \newpage 
@@ -53,7 +50,7 @@ cacheon <- TRUE
 
 ## Data source
 
-SHFDB3, https://kiheartfailure.github.io/shfdb3/, v 3.2.4. 
+SHFDB3, https://kiheartfailure.github.io/shfdb3/, v 3.2.6. 
 
 ## Inclusion/exclusion criteria
 
@@ -79,13 +76,13 @@ The median age (IQR) is `r rsdata %>% summarise(med = fn(median(shf_age), dig = 
 
 All analyses were performed using `r sessionInfo()$R.version$version.string` [@r]. 
 The level of significance is set to 5%, two-sided. No adjustment for multiple 
-comparisons were made and therefore the results should be viewed with some care.
+comparisons were made and therefore the results should be viewed with care.
 
 ## Missing data
 
 Missing data was imputed with multiple imputation (n = 10) using mice [@mice]. 
 Variables included in the model are indicated in 
-Table \ref{tab:tab1}. All-casuse mortality was included as the Nelson-Aalen estimator.
+Table \ref{tab:tab1}. All-cause mortality was included as the Nelson-Aalen estimator.
 
 ## Baseline characteristics
 
@@ -94,6 +91,10 @@ Table \ref{tab:tab1}. All-casuse mortality was included as the Nelson-Aalen esti
 ```
 
 ```{r, child = "../src/tab1.Rmd"}
+
+```
+
+```{r, child = "../src/tabcentre.Rmd"}
 
 ```
 
@@ -109,6 +110,11 @@ The variables were selected based on clinical relevance.
 
 ```
 
+### Assumptions
+
+Possible outliers were inspected with Cook's distance and multicollinearity with the Variance Inflation factor.
+=> No action deemed necessary.
+
 \clearpage
 
 ## Association between anemia and outcomes
@@ -118,16 +124,15 @@ The following outcomes are considered:
 - All-cause mortality
 - First hospitalization
 
-Data were censored after 6 years, at 2019-12-31 or death/emigration. 
+Data were censored at 6 years of follow-up, 2019-12-31 or death/emigration. 
 
-All-cause mortality was presented with a Kaplan-Meier curve and first 
-hospitalization with a cumulative incidence curve. 
+The outcomes were presented with cumulative incidence curves. 
 Cox proportional hazards regressions were 
 used to model the time to event, partly crude and partly adjusted for variables indicated in 
 Table \ref{tab:tab1}. The variables were selected based on clinical relevance.
 
 As a consistency analysis all-cause hospitalization was modelled using a sub-distributional hazards model [@fg] 
-were death was treated as a competing event. 
+where death was treated as a competing event. 
 
 The association between anemia and the outcomes in selected subgroups were 
 investigated using Cox proportional hazards regressions were, together with 
@@ -158,12 +163,29 @@ The median (min-max) follow-up is
 
 ```
 
+\clearpage
+
 ### Assumptions
 
 The proportional hazards assumption was investigated using the scaled Schoenfeld 
-residuals (cox.zph in [@survival-package]) for the primary outcome. 
+residuals (cox.zph in [@survival-package]) for the outcomes. 
 Possible outliers were visually inspected by plotting the dfbetas. 
-=> XXXX. 
+=> No action deemed necessary. 
+
+### Residual confounding
+
+In order to assess how robust the association between anemia and the outcomes are 
+to residual confounding the E-value 
+was calculated [@evalue]. The E-value is interpreted as the minimum Risk Ratio 
+that an unmeasured confounder would need to have with both anemia and 
+the outcome, conditional on the variables currently adjusted 
+for in the model, to fully eliminate the association between anemia and 
+outcome. See Table \ref{tab:evalueprint2} in order to compare the magnitude of the E-value 
+within the context of the study [@evalue2]. 
+
+```{r, child = "../src/evalue.Rmd"}
+
+```
 
 \clearpage
 \newpage

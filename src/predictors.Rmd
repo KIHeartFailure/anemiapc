@@ -14,7 +14,7 @@ orforest <- data.frame(
   uci = sormod$estimate[2:nval] + global_z05 * sormod$std.error[2:nval],
   p = fn(sormod$p.value[2:nval], dig = 3, p = TRUE)
 ) %>%
-  mutate(orci = paste0(fn(exp(logor), 1), " (", fn(exp(lci), 1), "-", fn(exp(uci), 1), ")"))
+  mutate(orci = paste0(fn(exp(logor), 2), " (", fn(exp(lci), 2), "-", fn(exp(uci), 2), ")"))
 
 orforest <- orforest %>%
   # remove = Yes
@@ -76,7 +76,7 @@ orforest <- orforest %>% arrange(logor)
 cextext <- 0.8
 
 # c(bottom, left, top, right)
-par(mar = c(4, 18, 1, 0) + 0.2)
+par(mar = c(5, 19.5, 1, 0) + 0.2)
 plot(orforest$logor, 1:nrow(orforest),
   xlab = "",
   xlim = c(
@@ -86,7 +86,7 @@ plot(orforest$logor, 1:nrow(orforest),
   ylim = c(1, nrow(orforest) + 1),
   axes = FALSE,
   ylab = NA,
-  cex.lab = 1.1,
+  cex.lab = cextext,
   main = NA,
   cex = 1.5,
   type = "p",
@@ -112,25 +112,37 @@ axis(1,
 axis(2,
   at = 1:nrow(orforest),
   labels = orforest$modnameforest,
-  cex.axis = cextext, tick = FALSE, las = 2, line = 17, hadj = 0
+  cex.axis = cextext, tick = FALSE, las = 2, line = 18.5, hadj = 0
 )
 
 axis(2,
-  at = 1:(nrow(orforest) + 1),
-  labels = c(orforest$orci, "OR (95% CI)"),
-  cex.axis = cextext, tick = FALSE, las = 2, line = 3.4, hadj = 0.5
+  at = nrow(orforest) + 1,
+  labels = "OR (95% CI)",
+  cex.axis = cextext, tick = FALSE, las = 2, line = 4, hadj = 0.5, font = 2
+)
+axis(2,
+  at = 1:nrow(orforest),
+  labels = orforest$orci,
+  cex.axis = cextext, tick = FALSE, las = 2, line = 4, hadj = 0.5
 )
 
 axis(2,
-  at = 1:(nrow(orforest) + 1),
-  labels = c(orforest$p, "P-value"),
+  at = nrow(orforest) + 1,
+  labels = "P-value",
+  cex.axis = cextext, tick = FALSE, las = 2, line = -0.2, hadj = 0.5, font = 2
+)
+axis(2,
+  at = 1:nrow(orforest),
+  labels = orforest$p,
   cex.axis = cextext, tick = FALSE, las = 2, line = -0.2, hadj = 0.5
 )
 
 axis(1,
-  at = 0.02, cex.axis = cextext,
-  labels = "Anemia less likely    Anemia more likely", line = 1, tick = FALSE
+  at = 0, cex.axis = cextext,
+  labels = "OR (95% CI)", line = 1, tick = FALSE
 )
-
-text(0, (nrow(orforest) + 1), "OR (95% CI)", cex = cextext)
+axis(1,
+  at = 0, cex.axis = cextext,
+  labels = "less - Anemia - more", line = 2, tick = FALSE
+)
 ```

@@ -8,6 +8,7 @@ tabvars <- c(
   "shf_age",
   "shf_age_cat",
   "shf_indexyear_cat",
+  "shf_durationhf",
 
   # clinical factors and lab measurments
   "shf_ef_cat",

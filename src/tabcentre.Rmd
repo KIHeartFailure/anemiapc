@@ -1,0 +1,14 @@
+```{r tabcentre, cache=cacheon}
+
+tabcentre <- rsdata %>%
+  count(shf_centre)
+
+write.xlsx(tabcentre, paste0("./output/tabs/tabcentre_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+default_kable(tabcentre,
+  font_size = 6,
+  caption = "Centres",
+  longtable = TRUE,
+  escape = TRUE
+)
+```
