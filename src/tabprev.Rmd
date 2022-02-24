@@ -26,13 +26,60 @@ tabprevsex <- rsdata %>%
 
 taball <- bind_rows(tabprevtot, tabprevsex)
 
+# tests
+
+## HFrEF
+pref <- fn(chisq.test(table(
+  rsdata %>% filter(shf_ef_cat == "HFrEF") %>% pull(shf_sex),
+  rsdata %>% filter(shf_ef_cat == "HFrEF") %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+## HFmrEF
+pmref <- fn(chisq.test(table(
+  rsdata %>% filter(shf_ef_cat == "HFmrEF") %>% pull(shf_sex),
+  rsdata %>% filter(shf_ef_cat == "HFmrEF") %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+## HFpEF
+ppef <- fn(chisq.test(table(
+  rsdata %>% filter(shf_ef_cat == "HFpEF") %>% pull(shf_sex),
+  rsdata %>% filter(shf_ef_cat == "HFpEF") %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+taball <- rbind(taball, c("p-value sex", pref, pmref, ppef, NA))
+
+# female
+pfem <- fn(chisq.test(table(
+  rsdata %>% filter(shf_sex == "Female") %>% pull(shf_ef_cat),
+  rsdata %>% filter(shf_sex == "Female") %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+# male
+pmale <- fn(chisq.test(table(
+  rsdata %>% filter(shf_sex == "Male") %>% pull(shf_ef_cat),
+  rsdata %>% filter(shf_sex == "Male") %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+taball <- cbind(taball[, 1:4], c(NA, pfem, pmale, NA), taball[, 5])
+
+colnames(taball) <- c("Sex", levels(rsdata$shf_ef_cat), "p-value EF", "Missing EF")
+
 write.xlsx(taball, paste0("./output/tabs/tabprev_", Sys.Date(), ".xlsx"), rowNames = FALSE)
 
-## fix in order to use escape = TRUE
-colnames(taball) <- c("Sex", levels(rsdata$shf_ef_cat), "Missing EF")
-
-default_kable(taball,
+footnote(default_kable(taball,
   scale_down = FALSE,
   caption = "Prevalence anemia by EF and gender"
+),
+general = "Tested with chi-square test."
 )
 ```

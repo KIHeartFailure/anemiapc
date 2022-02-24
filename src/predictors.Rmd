@@ -24,7 +24,7 @@ orforest <- orforest %>%
     # if recoding or categorizing will still get org label
     var_tmp = str_replace_all(var, "(_cat2|_cat)", ""),
     # if shf/sos combination  will still get org label
-    var_tmp = str_replace_all(var_tmp, "shf_sos_com_", "sos_com_"),
+    var_tmp = str_replace_all(var_tmp, "shf_sos_com_", "sos_com_")
   )
 
 orforest <- left_join(orforest,

@@ -104,9 +104,16 @@ Table \ref{tab:tab1}. All-cause mortality was included as the Nelson-Aalen estim
 
 Associations between anemia and baseline characteristics were evaluated using a multivariable logistic 
 regression with variables indicated in Table \ref{tab:tab1}. 
-The variables were selected based on clinical relevance. 
+The variables were selected based on clinical relevance. The associations were also evaluated with the interaction between gender  
+and the respective variable (note that the OR therefore are from different models). 
 
 ```{r, child = "../src/predictors.Rmd"}
+
+```
+
+\clearpage
+
+```{r, child = "../src/predictors_sex.Rmd"}
 
 ```
 

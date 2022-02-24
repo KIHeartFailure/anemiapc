@@ -1,0 +1,145 @@
+```{r predsex, cache=cacheon}
+
+modvarstmp <- modvars[modvars != "shf_sex"]
+levskon <- levels(rsdata$shf_sex)
+
+ormod <- with(imp, glm(formula(paste0("shf_anemia == 'Yes' ~ ", paste(modvarstmp, collapse = " + "))),
+  family = binomial(link = "logit")
+))
+sormod <- summary(pool(ormod))
+out <- data.frame(matrix(NA, ncol = 4, nrow = length(sormod$term) - 1))
+out[, 1] <- sormod$term[2:length(sormod$term)]
+
+colnames(out) <- c("var", "Female", "Male", "p-value interaction*")
+
+for (i in seq_along(modvarstmp)) {
+  modvarstmp2 <- modvarstmp[modvarstmp != modvarstmp[i]]
+  nlevs <- length(levels(rsdata %>% pull(!!sym(modvarstmp[i]))))
+
+  ormod <- with(imp, glm(formula(paste0(
+    "shf_anemia == 'Yes' ~ ", modvarstmp[i], " * relevel(shf_sex, ref = 'Female') + ",
+    paste(modvarstmp2, collapse = " + ")
+  )),
+  family = binomial(link = "logit")
+  ))
+  sormod <- summary(pool(ormod))
+
+  outfem <- data.frame(
+    Variable = as.character(sormod$term[2:nlevs]),
+    orci = paste0(
+      fn(exp(sormod$estimate[2:nlevs]), 2),
+      " (",
+      fn(exp(sormod$estimate[2:nlevs] - global_z05 * sormod$std.error[2:nlevs]), 2),
+      "-",
+      fn(exp(sormod$estimate[2:nlevs] + global_z05 * sormod$std.error[2:nlevs]), 2), "), ",
+      fn(sormod$p.value[2:nlevs], dig = 3, p = TRUE)
+    )
+  )
+
+  ormod <- with(imp, glm(formula(paste0(
+    "shf_anemia == 'Yes' ~ ", modvarstmp[i], " * relevel(shf_sex, ref = 'Male') + ",
+    paste(modvarstmp2, collapse = " + ")
+  )),
+  family = binomial(link = "logit")
+  ))
+  sormod <- summary(pool(ormod))
+
+  outmale <- data.frame(
+    Variable = as.character(sormod$term[2:nlevs]),
+    orci = paste0(
+      fn(exp(sormod$estimate[2:nlevs]), 2),
+      " (",
+      fn(exp(sormod$estimate[2:nlevs] - global_z05 * sormod$std.error[2:nlevs]), 2),
+      "-",
+      fn(exp(sormod$estimate[2:nlevs] + global_z05 * sormod$std.error[2:nlevs]), 2), "), ",
+      fn(sormod$p.value[2:nlevs], dig = 3, p = TRUE)
+    )
+  )
+
+
+  if (nlevs == 2) {
+    pint <- fn(last(sormod$p.value), dig = 3, p = TRUE)
+  }
+  if (nlevs > 2) {
+    ormodnoint <- with(imp, glm(formula(paste0(
+      "shf_anemia == 'Yes' ~ ", modvarstmp[i], " + relevel(shf_sex, ref = 'Male') + ",
+      paste(modvarstmp2, collapse = " + ")
+    )),
+    family = binomial(link = "logit")
+    ))
+    int <- D1(ormod, ormodnoint)
+    pint <- fn(int$result[4], dig = 3, p = TRUE)
+  }
+
+  outtmp <- cbind(outfem, outmale[, 2], pint)
+
+  out[out$var %in% outtmp$Variable, ] <- outtmp
+
+  out <<- out
+}
+
+out <- out %>%
+  # remove = Yes
+  mutate(var = str_replace(var, fixed("Yes"), "")) %>%
+  # to get labs and units in place
+  mutate(
+    # if recoding or categorizing will still get org label
+    var_tmp = str_replace_all(var, "(_cat2|_cat)", ""),
+    # if shf/sos combination  will still get org label
+    var_tmp = str_replace_all(var_tmp, "shf_sos_com_", "sos_com_")
+  )
+
+
+out <- left_join(out,
+  meta.variables.Sheet.1 %>%
+    select(variable, label, unit),
+  by = c("var_tmp" = "variable")
+) %>%
+  mutate(
+    Variable = coalesce(label, var_tmp),
+    Variable = if_else(!is.na(unit),
+      paste0(Variable, " (", unit, ")"),
+      Variable
+    )
+  ) %>%
+  mutate(
+    Variable = case_when(
+      Variable == "shf_indexyear011-2018" ~ "Index year 2011-2018 vs 2000-2010",
+      Variable == "shf_nyhaIII-IV" ~ "NYHA III-IV vs I-II",
+      Variable == "scb_famtypeLiving alone" ~ "Living alone",
+      Variable == "shf_deviceCRT/ICD" ~ "CRT/ICD",
+      Variable == "shf_durationhf>6mo" ~ "Duration HF > 6 (mo)",
+      Variable == "shf_age>=75" ~ "Age>=75 vs <75 (years)",
+      Variable == "scb_educationUniversity" ~ "University vs Compulsory school",
+      Variable == "scb_educationSecondary school" ~ "Secondary vs Compulsory school",
+      Variable == "shf_bmi>=30" ~ "BMI>=30 vs <30 (kg/m2)",
+      Variable == "shf_followuplocationPrimary care/Other" ~ "Follow-up PC/Other vs Hospital",
+      Variable == "shf_efHFmrEF" ~ "HFmrEF vs HFrEF (%)",
+      Variable == "shf_sexMale" ~ "Male vs Female",
+      Variable == "shf_efHFpEF" ~ "HFpEF vs HFrEF (%)",
+      Variable == "scb_dispincomeAbove medium" ~ "Income Above vs below medium",
+      Variable == "shf_map>90" ~ "MAP>90 vs <=90 (mmHg)",
+      Variable == "shf_gfrckdepi<60" ~ "eGFR<60 vs >=60 (mL/min/1.73m2)",
+      Variable == "shf_heartrate>70" ~ "Heart rate>70 vs <=70 (beats/min)",
+      Variable == "shf_ntprobnpAbove medium" ~ "NT-proBNP Above vs below medium",
+      TRUE ~ Variable
+    )
+  ) %>%
+  select(Variable, Female, Male, "p-value interaction*")
+
+write.xlsx(out, paste0("./output/tabs/assanemia_gender_", Sys.Date(), ".xlsx"), rowNames = FALSE, overwrite = T)
+
+out <- out %>%
+  mutate(Variable = sanitize_text(Variable))
+
+footnote(
+  default_kable(out,
+    font_size = 6,
+    caption = "Associations with anemia by gender",
+    longtable = TRUE,
+    escape = FALSE
+  ) %>%
+    add_header_above(c(" " = 1, "OR (95% CI), p-value" = 2, " " = 1)),
+  symbol = "For variables with > 2 levels the p-value for interaction is the same."
+)
+```
