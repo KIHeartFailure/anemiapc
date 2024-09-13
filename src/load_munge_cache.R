@@ -14,6 +14,8 @@ ProjectTemplate::cache("flow")
 ProjectTemplate::cache("rsdata")
 
 ProjectTemplate::cache("imp")
+ProjectTemplate::cache("impunder80")
+ProjectTemplate::cache("impover80")
 
 ProjectTemplate::cache("tabvars")
 ProjectTemplate::cache("modvars")

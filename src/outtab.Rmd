@@ -1,5 +1,5 @@
-```{r outtab, cache=cacheon}
-survfunc <- function(data, time, event, eventcr = NULL, eventname) {
+```{r outtabfunc, cache=cacheon}
+survfunc <- function(data = rsdata, impdata = imp, novars = NULL, time, event, eventcr = NULL, eventname) {
   out <- data.frame(matrix(NA, ncol = 4, nrow = ifelse(is.null(eventcr), 8, 7)))
 
   out[1, 1] <- eventname
@@ -10,7 +10,7 @@ survfunc <- function(data, time, event, eventcr = NULL, eventname) {
   out[1:5, 2] <- paste("% (95% CI) at ", c("30days", "90days", "1yr", "3yr", "5yr"))
 
   fit <- survfit(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ shf_anemia")),
-    data = rsdata
+    data = data
   )
 
   sfit <- summary(fit, times = c(30, 90, 365, 365 * 3, 365 * 5))
@@ -24,14 +24,14 @@ survfunc <- function(data, time, event, eventcr = NULL, eventname) {
   ## incidence rate
   out[6, 2] <- "No events, sum py, incidence rate/1000py (95% CI)"
 
-  ev <- rsdata %>%
+  ev <- data %>%
     group_by(shf_anemia) %>%
     summarise(
       ev = sum(!!sym(event) == "Yes"),
       .groups = "rowwise"
     )
 
-  s <- rsdata %>%
+  s <- data %>%
     group_by(shf_anemia) %>%
     summarise(
       s = sum(!!sym(time) / 365.25),
@@ -54,7 +54,7 @@ survfunc <- function(data, time, event, eventcr = NULL, eventname) {
 
   ## crude
   mod <- coxph(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ shf_anemia")),
-    data = rsdata
+    data = data
   )
   smod <- summary(mod)
 
@@ -66,9 +66,9 @@ survfunc <- function(data, time, event, eventcr = NULL, eventname) {
   ))
 
   ## adjusted
-  amod <- with(imp, coxph(formula(paste0(
+  amod <- with(impdata, coxph(formula(paste0(
     "Surv(", time, ",", event, " == 'Yes') ~ shf_anemia +",
-    paste(modvars, collapse = " + ")
+    paste(setdiff(modvars, novars), collapse = " + ")
   ))))
 
   ## df the number of events minus the regression coefficients.
@@ -89,13 +89,13 @@ survfunc <- function(data, time, event, eventcr = NULL, eventname) {
     out[9, 2] <- "Adjusted, death as competing event, HR (95% CI), p-value"
 
     nams <- names(mice::complete(imp, 1))
-    modvarscr <- nams[str_detect(nams, "_cr_")]
+    modvarscr <- setdiff(nams[str_detect(nams, "_cr_")], novars)
 
     mod <- crr_mids_hf(
       event = eventcr,
       time = time,
       xvars = modvarscr,
-      data = imp
+      data = impdata
     )
 
     smod <- summary(pool(mod))
@@ -109,7 +109,9 @@ survfunc <- function(data, time, event, eventcr = NULL, eventname) {
   }
   return(out)
 }
+```
 
+```{r outtab, cache=cacheon, dependson="outtabfunc"}
 death <- survfunc(
   time = "sos_outtime_death6y",
   event = "sos_out_death6y",
@@ -132,5 +134,69 @@ write.xlsx(outall, paste0("./output/tabs/out_", Sys.Date(), ".xlsx"), rowNames =
 default_kable(outall,
   font_size = 6,
   caption = "Association between anemia and outcomes"
+)
+```
+
+```{r outtabunder80, cache=cacheon, dependson="outtabfunc"}
+death <- survfunc(
+  data = rsdata %>% filter(shf_age < 80), 
+  impdata = impunder80, 
+  novars = c("shf_age_cat", "shf_age_cat_cr_over75"), 
+  time = "sos_outtime_death6y",
+  event = "sos_out_death6y",
+  eventname = "All-cause mortality"
+)
+anyhosp <- survfunc(
+  data = rsdata %>% filter(shf_age < 80), 
+  impdata = impunder80, 
+  novars = c("shf_age_cat", "shf_age_cat_cr_over75"), 
+  time = "sos_outtime_hospany6y",
+  event = "sos_out_hospany6y",
+  eventcr = "sos_out_hospany6y_cr",
+  eventname = "First all-cause hospitalization"
+)
+
+outall <- rbind(
+  death,
+  anyhosp
+)
+
+write.xlsx(outall, paste0("./output/tabs/out_under80_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+default_kable(outall,
+  font_size = 6,
+  caption = "Association between anemia and outcomes - patients < 80 years"
+)
+```
+
+```{r outtabover80, cache=cacheon, dependson="outtabfunc"}
+death <- survfunc(
+  data = rsdata %>% filter(shf_age >= 80), 
+  impdata = impover80, 
+  novars = c("shf_age_cat", "shf_age_cat_cr_over75"), 
+  time = "sos_outtime_death6y",
+  event = "sos_out_death6y",
+  eventname = "All-cause mortality"
+)
+anyhosp <- survfunc(
+  data = rsdata %>% filter(shf_age >= 80), 
+  impdata = impover80, 
+  novars = c("shf_age_cat", "shf_age_cat_cr_over75"), 
+  time = "sos_outtime_hospany6y",
+  event = "sos_out_hospany6y",
+  eventcr = "sos_out_hospany6y_cr",
+  eventname = "First all-cause hospitalization"
+)
+
+outall <- rbind(
+  death,
+  anyhosp
+)
+
+write.xlsx(outall, paste0("./output/tabs/out_over80_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+default_kable(outall,
+  font_size = 6,
+  caption = "Association between anemia and outcomes - patients >= 80 years"
 )
 ```

@@ -83,3 +83,179 @@ footnote(default_kable(taball,
 general = "Tested with chi-square test."
 )
 ```
+
+```{r tab1prevunder80, cache=cacheon}
+
+tabprevtot <- rsdata %>%
+  filter(shf_age < 80) %>%
+  group_by(shf_ef_cat) %>%
+  count(shf_anemia) %>%
+  mutate(
+    p = fn(n / sum(n) * 100, 1),
+    np = paste0(n, " (", p, "%)")
+  ) %>%
+  filter(shf_anemia == "Yes") %>%
+  select(shf_ef_cat, np) %>%
+  pivot_wider(names_from = shf_ef_cat, values_from = np) %>%
+  mutate(shf_sex = "Total") %>%
+  select(shf_sex, HFrEF:`NA`)
+
+tabprevsex <- rsdata %>%
+  filter(shf_age < 80) %>%
+  group_by(shf_ef_cat, shf_sex) %>%
+  count(shf_anemia) %>%
+  mutate(
+    p = fn(n / sum(n) * 100, 1),
+    np = paste0(n, " (", p, "%)")
+  ) %>%
+  filter(shf_anemia == "Yes") %>%
+  select(shf_ef_cat, shf_sex, np) %>%
+  pivot_wider(names_from = shf_ef_cat, values_from = np)
+
+taball <- bind_rows(tabprevtot, tabprevsex)
+
+# tests
+
+## HFrEF
+pref <- fn(chisq.test(table(
+  rsdata %>% filter(shf_ef_cat == "HFrEF" & shf_age < 80) %>% pull(shf_sex),
+  rsdata %>% filter(shf_ef_cat == "HFrEF" & shf_age < 80) %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+## HFmrEF
+pmref <- fn(chisq.test(table(
+  rsdata %>% filter(shf_ef_cat == "HFmrEF" & shf_age < 80) %>% pull(shf_sex),
+  rsdata %>% filter(shf_ef_cat == "HFmrEF" & shf_age < 80) %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+## HFpEF
+ppef <- fn(chisq.test(table(
+  rsdata %>% filter(shf_ef_cat == "HFpEF" & shf_age < 80) %>% pull(shf_sex),
+  rsdata %>% filter(shf_ef_cat == "HFpEF" & shf_age < 80) %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+taball <- rbind(taball, c("p-value sex", pref, pmref, ppef, NA))
+
+# female
+pfem <- fn(chisq.test(table(
+  rsdata %>% filter(shf_sex == "Female" & shf_age < 80) %>% pull(shf_ef_cat),
+  rsdata %>% filter(shf_sex == "Female" & shf_age < 80) %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+# male
+pmale <- fn(chisq.test(table(
+  rsdata %>% filter(shf_sex == "Male" & shf_age < 80) %>% pull(shf_ef_cat),
+  rsdata %>% filter(shf_sex == "Male" & shf_age < 80) %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+taball <- cbind(taball[, 1:4], c(NA, pfem, pmale, NA), taball[, 5])
+
+colnames(taball) <- c("Sex", levels(rsdata$shf_ef_cat), "p-value EF", "Missing EF")
+
+write.xlsx(taball, paste0("./output/tabs/tabprev_under80_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+footnote(default_kable(taball,
+  scale_down = FALSE,
+  caption = "Prevalence anemia by EF and gender - patients < 80 years"
+),
+general = "Tested with chi-square test."
+)
+```
+
+```{r tab1prevover80, cache=cacheon}
+
+tabprevtot <- rsdata %>%
+  filter(shf_age >= 80) %>%
+  group_by(shf_ef_cat) %>%
+  count(shf_anemia) %>%
+  mutate(
+    p = fn(n / sum(n) * 100, 1),
+    np = paste0(n, " (", p, "%)")
+  ) %>%
+  filter(shf_anemia == "Yes") %>%
+  select(shf_ef_cat, np) %>%
+  pivot_wider(names_from = shf_ef_cat, values_from = np) %>%
+  mutate(shf_sex = "Total") %>%
+  select(shf_sex, HFrEF:`NA`)
+
+tabprevsex <- rsdata %>%
+  filter(shf_age >= 80) %>%
+  group_by(shf_ef_cat, shf_sex) %>%
+  count(shf_anemia) %>%
+  mutate(
+    p = fn(n / sum(n) * 100, 1),
+    np = paste0(n, " (", p, "%)")
+  ) %>%
+  filter(shf_anemia == "Yes") %>%
+  select(shf_ef_cat, shf_sex, np) %>%
+  pivot_wider(names_from = shf_ef_cat, values_from = np)
+
+taball <- bind_rows(tabprevtot, tabprevsex)
+
+# tests
+
+## HFrEF
+pref <- fn(chisq.test(table(
+  rsdata %>% filter(shf_ef_cat == "HFrEF" & shf_age >= 80) %>% pull(shf_sex),
+  rsdata %>% filter(shf_ef_cat == "HFrEF" & shf_age >= 80) %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+## HFmrEF
+pmref <- fn(chisq.test(table(
+  rsdata %>% filter(shf_ef_cat == "HFmrEF" & shf_age >= 80) %>% pull(shf_sex),
+  rsdata %>% filter(shf_ef_cat == "HFmrEF" & shf_age >= 80) %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+## HFpEF
+ppef <- fn(chisq.test(table(
+  rsdata %>% filter(shf_ef_cat == "HFpEF" & shf_age >= 80) %>% pull(shf_sex),
+  rsdata %>% filter(shf_ef_cat == "HFpEF" & shf_age >= 80) %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+taball <- rbind(taball, c("p-value sex", pref, pmref, ppef, NA))
+
+# female
+pfem <- fn(chisq.test(table(
+  rsdata %>% filter(shf_sex == "Female" & shf_age >= 80) %>% pull(shf_ef_cat),
+  rsdata %>% filter(shf_sex == "Female" & shf_age >= 80) %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+# male
+pmale <- fn(chisq.test(table(
+  rsdata %>% filter(shf_sex == "Male" & shf_age >= 80) %>% pull(shf_ef_cat),
+  rsdata %>% filter(shf_sex == "Male" & shf_age >= 80) %>% pull(shf_anemia)
+))$p.value,
+dig = 3, p = T
+)
+
+taball <- cbind(taball[, 1:4], c(NA, pfem, pmale, NA), taball[, 5])
+
+colnames(taball) <- c("Sex", levels(rsdata$shf_ef_cat), "p-value EF", "Missing EF")
+
+write.xlsx(taball, paste0("./output/tabs/tabprev_over80_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+footnote(default_kable(taball,
+  scale_down = FALSE,
+  caption = "Prevalence anemia by EF and gender - patients => 80 years"
+),
+general = "Tested with chi-square test."
+)
+```

@@ -1,12 +1,12 @@
 ```{r km, cache=cacheon}
 
-kmfunc <- function(time, event, eventname, yposplus = rep(0, 2)) {
+kmfunc <- function(time, event, eventname, yposplus = rep(0, 2), hrpos = 0, data = rsdata, impdata = imp, novars = NULL) {
 
   cexmy = 1.5
   # cox for print
   ## crude
   cmod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ shf_anemia")),
-    data = rsdata
+    data = data
   ))
   cp <- paste0(
     "Crude: ",
@@ -17,9 +17,9 @@ kmfunc <- function(time, event, eventname, yposplus = rep(0, 2)) {
   )
 
   ## adjusted
-  tmpamod <- with(imp, coxph(formula(paste0(
+  tmpamod <- with(impdata, coxph(formula(paste0(
     "Surv(", time, ",", event, " == 'Yes') ~ shf_anemia +",
-    paste(modvars, collapse = " + ")
+    paste(setdiff(modvars, novars), collapse = " + ")
   ))))
 
   ## df the number of events minus the regression coefficients.
@@ -39,7 +39,7 @@ kmfunc <- function(time, event, eventname, yposplus = rep(0, 2)) {
 
   # and the curves...
   fit <- survfit(formula(paste0("Surv(", time, ",", event, "=='Yes') ~ shf_anemia")),
-    data = rsdata
+    data = data
   ) # needed also for cuminc for n at risk
 
   # c(bottom, left, top, right)
@@ -90,9 +90,9 @@ kmfunc <- function(time, event, eventname, yposplus = rep(0, 2)) {
   axis(1, at = seq(0, 6, 1) * 365, labels = nrisk[1:7], line = 4, tick = FALSE, cex.axis = cexmy)
   axis(1, at = seq(0, 6, 1) * 365, labels = nrisk[8:14], line = 5.5, tick = FALSE, cex.axis = cexmy)
 
-  text(3.5 * 365, 0.2, "HR (95% CI), p", cex = cexmy, adj = 0.5)
-  text(3.5 * 365, 0.125, cp, cex = cexmy, adj = 0.5)
-  text(3.5 * 365, 0.05, ap, cex = cexmy, adj = 0.5)
+  text(3.5 * 365, 0.2 + hrpos, "HR (95% CI), p", cex = cexmy, adj = 0.5)
+  text(3.5 * 365, 0.125 + hrpos, cp, cex = cexmy, adj = 0.5)
+  text(3.5 * 365, 0.05 + hrpos, ap, cex = cexmy, adj = 0.5)
 }
 ```
 
@@ -111,5 +111,54 @@ kmfunc(
   event = "sos_out_hospany6y",
   eventname = "First all-cause hospitalization (%)",
   yposplus = c(0, 0)
+)
+```
+
+```{r kmdeathunder80, fig.cap="All-cause mortality - patients < 80 years", cache=cacheon, dependson="km", fig.height=7, fig.width=8}
+kmfunc(
+  time = "sos_outtime_death6y",
+  event = "sos_out_death6y",
+  eventname = "All-cause mortality (%)",
+  yposplus = c(0, 0), 
+  hrpos = .7, 
+  data = rsdata %>% filter(shf_age < 80), 
+  impdata = impunder80, 
+  novars = "shf_age_cat"
+)
+```
+
+```{r kmhospanyunder80, fig.cap="All-cause hospitalization - patients < 80 years", cache=cacheon, dependson="km", fig.height=7, fig.width=8}
+kmfunc(
+  time = "sos_outtime_hospany6y",
+  event = "sos_out_hospany6y",
+  eventname = "First all-cause hospitalization (%)",
+  yposplus = c(0, 0),
+  data = rsdata %>% filter(shf_age < 80), 
+  impdata = impunder80, 
+  novars = "shf_age_cat"
+)
+```
+
+```{r kmdeathover80, fig.cap="All-cause mortality - patients >= 80 years", cache=cacheon, dependson="km", fig.height=7, fig.width=8}
+kmfunc(
+  time = "sos_outtime_death6y",
+  event = "sos_out_death6y",
+  eventname = "All-cause mortality (%)",
+  yposplus = c(0, 0), 
+  data = rsdata %>% filter(shf_age >= 80), 
+  impdata = impover80, 
+  novars = "shf_age_cat"
+)
+```
+
+```{r kmhospanyover80, fig.cap="All-cause hospitalization - patients >= 80 years", cache=cacheon, dependson="km", fig.height=7, fig.width=8}
+kmfunc(
+  time = "sos_outtime_hospany6y",
+  event = "sos_out_hospany6y",
+  eventname = "First all-cause hospitalization (%)",
+  yposplus = c(-.01, .01),
+  data = rsdata %>% filter(shf_age >= 80), 
+  impdata = impover80, 
+  novars = "shf_age_cat"
 )
 ```

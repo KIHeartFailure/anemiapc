@@ -86,15 +86,15 @@ Table \ref{tab:tab1}. All-cause mortality was included as the Nelson-Aalen estim
 
 ## Baseline characteristics
 
-```{r, child = "../src/tabprev.Rmd"}
+```{r, child = "./src/tabprev.Rmd"}
 
 ```
 
-```{r, child = "../src/tab1.Rmd"}
+```{r, child = "./src/tab1.Rmd"}
 
 ```
 
-```{r, child = "../src/tabcentre.Rmd"}
+```{r, child = "./src/tabcentre.Rmd"}
 
 ```
 
@@ -107,13 +107,13 @@ regression with variables indicated in Table \ref{tab:tab1}.
 The variables were selected based on clinical relevance. The associations were also evaluated with the interaction between gender  
 and the respective variable (note that the OR therefore are from different models). 
 
-```{r, child = "../src/predictors.Rmd"}
+```{r, child = "./src/predictors.Rmd"}
 
 ```
 
 \clearpage
 
-```{r, child = "../src/predictors_sex.Rmd"}
+```{r, child = "./src/predictors_sex.Rmd"}
 
 ```
 
@@ -158,15 +158,19 @@ The median (min-max) follow-up is
                                    pull(sumpy)` patient-years of follow-up.
 
 
-```{r, child = "../src/km.Rmd"}
+```{r, child = "./src/km.Rmd"}
 
 ```
 
-```{r, child = "../src/outtab.Rmd"}
+\clearpage
+
+```{r, child = "./src/outtab.Rmd"}
 
 ```
 
-```{r, child = "../src/outforestsub.Rmd"}
+\clearpage
+
+```{r, child = "./src/outforestsub.Rmd"}
 
 ```
 
@@ -190,7 +194,7 @@ for in the model, to fully eliminate the association between anemia and
 outcome. See Table \ref{tab:evalueprint2} in order to compare the magnitude of the E-value 
 within the context of the study [@evalue2]. 
 
-```{r, child = "../src/evalue.Rmd"}
+```{r, child = "./src/evalue.Rmd"}
 
 ```
 

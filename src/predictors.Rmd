@@ -146,3 +146,301 @@ axis(1,
   labels = "less - Anemia - more", line = 2, tick = FALSE
 )
 ```
+
+```{r predunder80, cache=cacheon}
+
+ormod <- with(impunder80, glm(formula(paste0("shf_anemia == 'Yes' ~ ", paste(setdiff(modvars, "shf_age_cat"), collapse = " + "))),
+  family = binomial(link = "logit")
+))
+
+sormod <- summary(pool(ormod))
+
+nval <- length(sormod$term)
+orforest <- data.frame(
+  var = as.character(sormod$term[2:nval]),
+  logor = sormod$estimate[2:nval],
+  lci = sormod$estimate[2:nval] - global_z05 * sormod$std.error[2:nval],
+  uci = sormod$estimate[2:nval] + global_z05 * sormod$std.error[2:nval],
+  p = fn(sormod$p.value[2:nval], dig = 3, p = TRUE)
+) %>%
+  mutate(orci = paste0(fn(exp(logor), 2), " (", fn(exp(lci), 2), "-", fn(exp(uci), 2), ")"))
+
+orforest <- orforest %>%
+  # remove = Yes
+  mutate(var = str_replace(var, fixed("Yes"), "")) %>%
+  # to get labs and units in place
+  mutate(
+    # if recoding or categorizing will still get org label
+    var_tmp = str_replace_all(var, "(_cat2|_cat)", ""),
+    # if shf/sos combination  will still get org label
+    var_tmp = str_replace_all(var_tmp, "shf_sos_com_", "sos_com_")
+  )
+
+orforest <- left_join(orforest,
+  meta.variables.Sheet.1 %>%
+    select(variable, label, unit),
+  by = c("var_tmp" = "variable")
+) %>%
+  mutate(
+    Variable = coalesce(label, var_tmp),
+    Variable = if_else(!is.na(unit),
+      paste0(Variable, " (", unit, ")"),
+      Variable
+    )
+  )
+
+orforest <- orforest %>%
+  mutate(
+    modnameforest = case_when(
+      Variable == "shf_indexyear011-2018" ~ "Index year 2011-2018 vs 2000-2010",
+      Variable == "shf_nyhaIII-IV" ~ "NYHA III-IV vs I-II",
+      Variable == "scb_famtypeLiving alone" ~ "Living alone",
+      Variable == "shf_deviceCRT/ICD" ~ "CRT/ICD",
+      Variable == "shf_durationhf>6mo" ~ "Duration HF > 6 (mo)",
+      Variable == "shf_age>=75" ~ "Age>=75 vs <75 (years)",
+      Variable == "scb_educationUniversity" ~ "University vs Compulsory school",
+      Variable == "scb_educationSecondary school" ~ "Secondary vs Compulsory school",
+      Variable == "shf_bmi>=30" ~ "BMI>=30 vs <30 (kg/m2)",
+      Variable == "shf_followuplocationPrimary care/Other" ~ "Follow-up PC/Other vs Hospital",
+      Variable == "shf_efHFmrEF" ~ "HFmrEF vs HFrEF (%)",
+      Variable == "shf_sexMale" ~ "Male vs Female",
+      Variable == "shf_efHFpEF" ~ "HFpEF vs HFrEF (%)",
+      Variable == "scb_dispincomeAbove medium" ~ "Income Above vs below medium",
+      Variable == "shf_map>90" ~ "MAP>90 vs <=90 (mmHg)",
+      Variable == "shf_gfrckdepi<60" ~ "eGFR<60 vs >=60 (mL/min/1.73m2)",
+      Variable == "shf_heartrate>70" ~ "Heart rate>70 vs <=70 (beats/min)",
+      Variable == "shf_ntprobnpAbove medium" ~ "NT-proBNP Above vs below medium",
+      TRUE ~ Variable
+    )
+  )
+```
+
+```{r predplotunder80, fig.cap="Associations with anemia - patients < 80", cache=cacheon, dependson="predunder80", fig.width=6, fig.height=8}
+
+# exp(min(orforest$lci))
+# exp(max(orforest$uci))
+
+orforest <- orforest %>% arrange(logor)
+
+cextext <- 0.8
+
+# c(bottom, left, top, right)
+par(mar = c(5, 19.5, 1, 0) + 0.2)
+plot(orforest$logor, 1:nrow(orforest),
+  xlab = "",
+  xlim = c(
+    log(0.4),
+    log(3.5)
+  ),
+  ylim = c(1, nrow(orforest) + 1),
+  axes = FALSE,
+  ylab = NA,
+  cex.lab = cextext,
+  main = NA,
+  cex = 1.5,
+  type = "p",
+  pch = 22,
+  bg = global_kicols[1],
+  col = global_kicols[1]
+)
+
+
+for (i in 1:nrow(orforest)) {
+  matplot(c(orforest$lci[i], orforest$uci[i]), c(i, i),
+    type = "l", add = TRUE, col = global_kicols[1], cex = 1
+  )
+}
+
+matplot(c(0, 0), c(-1, nrow(orforest) + 0.5), type = "l", lty = 3, add = TRUE, col = "black")
+
+axis(1,
+  cex.axis = cextext, at = log(c(0.4, 0.6, 1, 2, 3)),
+  labels = c(0.4, 0.6, 1, 2, 3)
+)
+
+axis(2,
+  at = 1:nrow(orforest),
+  labels = orforest$modnameforest,
+  cex.axis = cextext, tick = FALSE, las = 2, line = 18.5, hadj = 0
+)
+
+axis(2,
+  at = nrow(orforest) + 1,
+  labels = "OR (95% CI)",
+  cex.axis = cextext, tick = FALSE, las = 2, line = 4, hadj = 0.5, font = 2
+)
+axis(2,
+  at = 1:nrow(orforest),
+  labels = orforest$orci,
+  cex.axis = cextext, tick = FALSE, las = 2, line = 4, hadj = 0.5
+)
+
+axis(2,
+  at = nrow(orforest) + 1,
+  labels = "P-value",
+  cex.axis = cextext, tick = FALSE, las = 2, line = -0.2, hadj = 0.5, font = 2
+)
+axis(2,
+  at = 1:nrow(orforest),
+  labels = orforest$p,
+  cex.axis = cextext, tick = FALSE, las = 2, line = -0.2, hadj = 0.5
+)
+
+axis(1,
+  at = 0, cex.axis = cextext,
+  labels = "OR (95% CI)", line = 1, tick = FALSE
+)
+axis(1,
+  at = 0, cex.axis = cextext,
+  labels = "less - Anemia - more", line = 2, tick = FALSE
+)
+```
+
+```{r predover80, cache=cacheon}
+
+ormod <- with(impover80, glm(formula(paste0("shf_anemia == 'Yes' ~ ", paste(setdiff(modvars, "shf_age_cat"), collapse = " + "))),
+  family = binomial(link = "logit")
+))
+
+sormod <- summary(pool(ormod))
+
+nval <- length(sormod$term)
+orforest <- data.frame(
+  var = as.character(sormod$term[2:nval]),
+  logor = sormod$estimate[2:nval],
+  lci = sormod$estimate[2:nval] - global_z05 * sormod$std.error[2:nval],
+  uci = sormod$estimate[2:nval] + global_z05 * sormod$std.error[2:nval],
+  p = fn(sormod$p.value[2:nval], dig = 3, p = TRUE)
+) %>%
+  mutate(orci = paste0(fn(exp(logor), 2), " (", fn(exp(lci), 2), "-", fn(exp(uci), 2), ")"))
+
+orforest <- orforest %>%
+  # remove = Yes
+  mutate(var = str_replace(var, fixed("Yes"), "")) %>%
+  # to get labs and units in place
+  mutate(
+    # if recoding or categorizing will still get org label
+    var_tmp = str_replace_all(var, "(_cat2|_cat)", ""),
+    # if shf/sos combination  will still get org label
+    var_tmp = str_replace_all(var_tmp, "shf_sos_com_", "sos_com_")
+  )
+
+orforest <- left_join(orforest,
+  meta.variables.Sheet.1 %>%
+    select(variable, label, unit),
+  by = c("var_tmp" = "variable")
+) %>%
+  mutate(
+    Variable = coalesce(label, var_tmp),
+    Variable = if_else(!is.na(unit),
+      paste0(Variable, " (", unit, ")"),
+      Variable
+    )
+  )
+
+orforest <- orforest %>%
+  mutate(
+    modnameforest = case_when(
+      Variable == "shf_indexyear011-2018" ~ "Index year 2011-2018 vs 2000-2010",
+      Variable == "shf_nyhaIII-IV" ~ "NYHA III-IV vs I-II",
+      Variable == "scb_famtypeLiving alone" ~ "Living alone",
+      Variable == "shf_deviceCRT/ICD" ~ "CRT/ICD",
+      Variable == "shf_durationhf>6mo" ~ "Duration HF > 6 (mo)",
+      Variable == "shf_age>=75" ~ "Age>=75 vs <75 (years)",
+      Variable == "scb_educationUniversity" ~ "University vs Compulsory school",
+      Variable == "scb_educationSecondary school" ~ "Secondary vs Compulsory school",
+      Variable == "shf_bmi>=30" ~ "BMI>=30 vs <30 (kg/m2)",
+      Variable == "shf_followuplocationPrimary care/Other" ~ "Follow-up PC/Other vs Hospital",
+      Variable == "shf_efHFmrEF" ~ "HFmrEF vs HFrEF (%)",
+      Variable == "shf_sexMale" ~ "Male vs Female",
+      Variable == "shf_efHFpEF" ~ "HFpEF vs HFrEF (%)",
+      Variable == "scb_dispincomeAbove medium" ~ "Income Above vs below medium",
+      Variable == "shf_map>90" ~ "MAP>90 vs <=90 (mmHg)",
+      Variable == "shf_gfrckdepi<60" ~ "eGFR<60 vs >=60 (mL/min/1.73m2)",
+      Variable == "shf_heartrate>70" ~ "Heart rate>70 vs <=70 (beats/min)",
+      Variable == "shf_ntprobnpAbove medium" ~ "NT-proBNP Above vs below medium",
+      TRUE ~ Variable
+    )
+  )
+```
+
+```{r predplotover80, fig.cap="Associations with anemia - patients >= 80", cache=cacheon, dependson="predover80", fig.width=6, fig.height=8}
+
+# exp(min(orforest$lci))
+# exp(max(orforest$uci))
+
+orforest <- orforest %>% arrange(logor)
+
+cextext <- 0.8
+
+# c(bottom, left, top, right)
+par(mar = c(5, 19.5, 1, 0) + 0.2)
+plot(orforest$logor, 1:nrow(orforest),
+  xlab = "",
+  xlim = c(
+    log(0.4),
+    log(3.5)
+  ),
+  ylim = c(1, nrow(orforest) + 1),
+  axes = FALSE,
+  ylab = NA,
+  cex.lab = cextext,
+  main = NA,
+  cex = 1.5,
+  type = "p",
+  pch = 22,
+  bg = global_kicols[1],
+  col = global_kicols[1]
+)
+
+
+for (i in 1:nrow(orforest)) {
+  matplot(c(orforest$lci[i], orforest$uci[i]), c(i, i),
+    type = "l", add = TRUE, col = global_kicols[1], cex = 1
+  )
+}
+
+matplot(c(0, 0), c(-1, nrow(orforest) + 0.5), type = "l", lty = 3, add = TRUE, col = "black")
+
+axis(1,
+  cex.axis = cextext, at = log(c(0.4, 0.6, 1, 2, 3)),
+  labels = c(0.4, 0.6, 1, 2, 3)
+)
+
+axis(2,
+  at = 1:nrow(orforest),
+  labels = orforest$modnameforest,
+  cex.axis = cextext, tick = FALSE, las = 2, line = 18.5, hadj = 0
+)
+
+axis(2,
+  at = nrow(orforest) + 1,
+  labels = "OR (95% CI)",
+  cex.axis = cextext, tick = FALSE, las = 2, line = 4, hadj = 0.5, font = 2
+)
+axis(2,
+  at = 1:nrow(orforest),
+  labels = orforest$orci,
+  cex.axis = cextext, tick = FALSE, las = 2, line = 4, hadj = 0.5
+)
+
+axis(2,
+  at = nrow(orforest) + 1,
+  labels = "P-value",
+  cex.axis = cextext, tick = FALSE, las = 2, line = -0.2, hadj = 0.5, font = 2
+)
+axis(2,
+  at = 1:nrow(orforest),
+  labels = orforest$p,
+  cex.axis = cextext, tick = FALSE, las = 2, line = -0.2, hadj = 0.5
+)
+
+axis(1,
+  at = 0, cex.axis = cextext,
+  labels = "OR (95% CI)", line = 1, tick = FALSE
+)
+axis(1,
+  at = 0, cex.axis = cextext,
+  labels = "less - Anemia - more", line = 2, tick = FALSE
+)
+```

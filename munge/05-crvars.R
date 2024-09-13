@@ -17,3 +17,6 @@ for (i in seq_along(modvars)) {
 # Convert back to Mids
 imput.short <- as.mids(long)
 imp <- imput.short
+
+impunder80 <- mice::filter(imp, rsdata$shf_age < 80)
+impover80 <- mice::filter(imp, rsdata$shf_age >= 80)
